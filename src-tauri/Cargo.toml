@@ -1,6 +1,6 @@
 [package]
 name = "quickscan"
-version = "0.1.0"
+version = "0.2.0"
 description = "秒验 - 二手电脑一键检测工具"
 authors = ["QuickScan Team"]
 edition = "2021"
