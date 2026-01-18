@@ -7,50 +7,54 @@ interface KeyboardTestProps {
 
 const MAC_KEYBOARD_LAYOUT = [
   ['Escape', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'],
-  ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
-  ['Tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'],
-  ['CapsLock', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", 'Enter'],
-  ['Shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'ShiftRight'],
-  ['Fn', 'Control', 'Alt', 'Meta', 'Space', 'MetaRight', 'AltRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'],
+  ['Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace'],
+  ['Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash'],
+  ['CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'],
+  ['ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ShiftRight'],
+  ['ControlLeft', 'AltLeft', 'MetaLeft', 'Space', 'MetaRight', 'AltRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'],
 ];
+
+const ALL_KEYS = MAC_KEYBOARD_LAYOUT.flat();
+const VALID_KEYS_SET = new Set(ALL_KEYS);
+const TOTAL_KEYS = ALL_KEYS.length;
 
 const KEY_DISPLAY_MAP: Record<string, string> = {
   'Escape': 'Esc',
+  'Backquote': '`',
+  'Digit1': '1', 'Digit2': '2', 'Digit3': '3', 'Digit4': '4', 'Digit5': '5',
+  'Digit6': '6', 'Digit7': '7', 'Digit8': '8', 'Digit9': '9', 'Digit0': '0',
+  'Minus': '-', 'Equal': '=',
   'Backspace': '⌫',
   'Tab': '⇥',
+  'KeyQ': 'Q', 'KeyW': 'W', 'KeyE': 'E', 'KeyR': 'R', 'KeyT': 'T',
+  'KeyY': 'Y', 'KeyU': 'U', 'KeyI': 'I', 'KeyO': 'O', 'KeyP': 'P',
+  'BracketLeft': '[', 'BracketRight': ']', 'Backslash': '\\',
   'CapsLock': 'Caps',
+  'KeyA': 'A', 'KeyS': 'S', 'KeyD': 'D', 'KeyF': 'F', 'KeyG': 'G',
+  'KeyH': 'H', 'KeyJ': 'J', 'KeyK': 'K', 'KeyL': 'L',
+  'Semicolon': ';', 'Quote': "'",
   'Enter': '⏎',
-  'Shift': '⇧',
-  'ShiftRight': '⇧',
-  'Control': '⌃',
-  'Alt': '⌥',
-  'AltRight': '⌥',
-  'Meta': '⌘',
-  'MetaRight': '⌘',
+  'ShiftLeft': '⇧', 'ShiftRight': '⇧',
+  'KeyZ': 'Z', 'KeyX': 'X', 'KeyC': 'C', 'KeyV': 'V', 'KeyB': 'B',
+  'KeyN': 'N', 'KeyM': 'M',
+  'Comma': ',', 'Period': '.', 'Slash': '/',
+  'ControlLeft': '⌃',
+  'AltLeft': '⌥', 'AltRight': '⌥',
+  'MetaLeft': '⌘', 'MetaRight': '⌘',
   'Space': '␣',
-  'ArrowLeft': '←',
-  'ArrowRight': '→',
-  'ArrowUp': '↑',
-  'ArrowDown': '↓',
-  'Fn': 'fn',
+  'ArrowLeft': '←', 'ArrowRight': '→', 'ArrowUp': '↑', 'ArrowDown': '↓',
 };
 
 export function KeyboardTest({ onComplete }: KeyboardTestProps) {
   const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
-  
-  const totalKeys = MAC_KEYBOARD_LAYOUT.flat().length;
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     e.preventDefault();
-    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    
-    let mappedKey = key;
-    if (e.code === 'ShiftRight') mappedKey = 'ShiftRight';
-    if (e.code === 'MetaRight') mappedKey = 'MetaRight';
-    if (e.code === 'AltRight') mappedKey = 'AltRight';
-    
-    setPressedKeys(prev => new Set([...prev, mappedKey]));
+    // 只记录布局中存在的按键
+    if (VALID_KEYS_SET.has(e.code)) {
+      setPressedKeys(prev => new Set([...prev, e.code]));
+    }
   }, []);
 
   useEffect(() => {
@@ -58,16 +62,18 @@ export function KeyboardTest({ onComplete }: KeyboardTestProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // 计算已测试的有效按键数量
+  const testedCount = [...pressedKeys].filter(key => VALID_KEYS_SET.has(key)).length;
+
   const handleFinish = () => {
-    const testedCount = pressedKeys.size;
-    const allPassed = testedCount === totalKeys;
-    onComplete(allPassed, testedCount, totalKeys);
+    const allPassed = testedCount === TOTAL_KEYS;
+    onComplete(allPassed, testedCount, TOTAL_KEYS);
   };
 
   const getKeyWidth = (key: string) => {
     if (key === 'Space') return '200px';
     if (key === 'Backspace' || key === 'Tab' || key === 'CapsLock') return '70px';
-    if (key === 'Enter' || key === 'Shift' || key === 'ShiftRight') return '80px';
+    if (key === 'Enter' || key === 'ShiftLeft' || key === 'ShiftRight') return '80px';
     return '40px';
   };
 
@@ -84,9 +90,9 @@ export function KeyboardTest({ onComplete }: KeyboardTestProps) {
             <span style={{ 
               fontSize: '24px', 
               fontWeight: 'bold',
-              color: pressedKeys.size === totalKeys ? 'var(--color-success)' : 'var(--color-primary)'
+              color: testedCount === TOTAL_KEYS ? 'var(--color-success)' : 'var(--color-primary)'
             }}>
-              {pressedKeys.size} / {totalKeys}
+              {testedCount} / {TOTAL_KEYS}
             </span>
             <span style={{ marginLeft: '8px', color: 'var(--color-text-secondary)' }}>
               {t('keyboard.tested')}

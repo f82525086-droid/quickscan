@@ -31,6 +31,27 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
   const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
   const isZh = i18n.language === 'zh';
 
+  // Translate indicator description from key
+  const translateIndicatorDesc = (desc: string): string => {
+    // Check if it contains a colon (e.g., "third_party_storage:SAMSUNG SSD")
+    if (desc.includes(':')) {
+      const [key, value] = desc.split(':');
+      const translatedKey = t(`refurbishment.indicatorDesc.${key}`, { defaultValue: '' });
+      if (translatedKey) {
+        return `${translatedKey}: ${value}`;
+      }
+    }
+    // Try direct translation
+    const translated = t(`refurbishment.indicatorDesc.${desc}`, { defaultValue: '' });
+    return translated || desc;
+  };
+
+  // Translate part name
+  const translatePartName = (part: string): string => {
+    const translated = t(`refurbishment.parts.${part}`, { defaultValue: '' });
+    return translated || part;
+  };
+
   const getScoreLabel = (score: number) => {
     if (score >= 90) return t('battery.rating.excellent');
     if (score >= 70) return t('battery.rating.good');
@@ -210,14 +231,15 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
       
       // Add replaced parts as issues
       for (const part of refurb.replacedParts) {
+        const translatedPart = translatePartName(part);
         issues.push({
           category: 'refurbishment',
           icon: RefreshCcw,
           level: 'warning',
-          title: isZh ? `检测到更换部件: ${part}` : `Replaced Part Detected: ${part}`,
+          title: isZh ? `检测到更换部件: ${translatedPart}` : `Replaced Part Detected: ${translatedPart}`,
           description: isZh
-            ? `该设备的 ${part} 可能已被更换为非原装部件。`
-            : `The ${part} of this device may have been replaced with non-original parts.`,
+            ? `该设备的 ${translatedPart} 可能已被更换为非原装部件。`
+            : `The ${translatedPart} of this device may have been replaced with non-original parts.`,
           suggestion: isZh
             ? '建议：非原装部件可能影响设备性能和兼容性，请确认部件质量并考虑议价。'
             : 'Suggestion: Non-original parts may affect performance and compatibility. Verify quality and consider negotiating.',
@@ -243,12 +265,13 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
       
       // Add warning indicators
       for (const indicator of refurb.indicators.filter(i => i.severity === 'warning' || i.severity === 'critical')) {
+        const translatedDesc = translateIndicatorDesc(indicator.description);
         issues.push({
           category: 'refurbishment',
           icon: RefreshCcw,
           level: indicator.severity === 'critical' ? 'failed' : 'warning',
-          title: indicator.description.split('：')[0] || indicator.name,
-          description: indicator.description,
+          title: translatedDesc.split(':')[0] || indicator.name,
+          description: translatedDesc,
           suggestion: isZh
             ? '建议：请仔细检查相关部件，考虑是否影响购买决定。'
             : 'Suggestion: Please carefully check the related parts and consider if it affects your purchase decision.',
@@ -561,74 +584,116 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
                   </span>
                 </div>
                 
-                {report.refurbishment.isRefurbished ? (
-                  <div style={{ fontSize: '14px' }}>
-                    {/* Confidence */}
-                    <div style={{ marginBottom: '12px', padding: '8px 12px', backgroundColor: 'var(--color-background)', borderRadius: '6px' }}>
-                      <span style={{ color: 'var(--color-text-secondary)' }}>{t('refurbishment.confidence.' + report.refurbishment.confidence)}</span>
+                <div style={{ fontSize: '14px' }}>
+                  {/* Confidence - only show if refurbished */}
+                  {report.refurbishment.isRefurbished && (
+                    <div style={{ marginBottom: '12px', padding: '8px 12px', backgroundColor: '#FFFBEB', borderRadius: '6px' }}>
+                      <span style={{ color: '#92400E' }}>{t('refurbishment.confidence.' + report.refurbishment.confidence)}</span>
                     </div>
-                    
-                    {/* Refurbishment Program */}
-                    {report.refurbishment.details.refurbProgram && (
-                      <div style={{ marginBottom: '12px' }}>
-                        <strong>{t('refurbishment.refurbProgram')}:</strong> {report.refurbishment.details.refurbProgram}
+                  )}
+                  
+                  {/* Refurbishment Program */}
+                  {report.refurbishment.details.refurbProgram && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <strong>{t('refurbishment.refurbProgram')}:</strong> {report.refurbishment.details.refurbProgram}
+                    </div>
+                  )}
+                  
+                  {/* Replaced Parts */}
+                  {report.refurbishment.replacedParts.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <strong>{t('refurbishment.replacedParts')}:</strong>
+                      <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                        {report.refurbishment.replacedParts.map((part, idx) => (
+                          <li key={idx} style={{ color: 'var(--color-warning)' }}>{translatePartName(part)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Indicators - show all, not just when refurbished */}
+                  {report.refurbishment.indicators.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <strong>{t('refurbishment.indicators')}:</strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                        {report.refurbishment.indicators.map((indicator, idx) => (
+                          <div key={idx} style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px',
+                            padding: '8px',
+                            backgroundColor: indicator.severity === 'warning' ? '#FFFBEB' : indicator.severity === 'critical' ? '#FEF2F2' : '#F3F4F6',
+                            borderRadius: '6px',
+                            borderLeft: `3px solid ${indicator.severity === 'warning' ? 'var(--color-warning)' : indicator.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-primary)'}`,
+                          }}>
+                            {indicator.severity === 'critical' ? <XCircle size={16} color="var(--color-danger)" /> : 
+                             indicator.severity === 'warning' ? <AlertCircle size={16} color="var(--color-warning)" /> :
+                             <Info size={16} color="var(--color-primary)" />}
+                            <span>{translateIndicatorDesc(indicator.description)}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                    
-                    {/* Replaced Parts */}
-                    {report.refurbishment.replacedParts.length > 0 && (
-                      <div style={{ marginBottom: '12px' }}>
-                        <strong>{t('refurbishment.replacedParts')}:</strong>
-                        <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-                          {report.refurbishment.replacedParts.map((part, idx) => (
-                            <li key={idx} style={{ color: 'var(--color-warning)' }}>{part}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {/* Indicators */}
-                    {report.refurbishment.indicators.length > 0 && (
+                    </div>
+                  )}
+                  
+                  {/* Detection Details - always show */}
+                  <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--color-background)', borderRadius: '6px', fontSize: '13px' }}>
+                    <p style={{ margin: '0 0 8px', fontWeight: 'bold', color: 'var(--color-text-secondary)' }}>
+                      {isZh ? '检测详情' : 'Detection Details'}
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       <div>
-                        <strong>{t('refurbishment.indicators')}:</strong>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                          {report.refurbishment.indicators.map((indicator, idx) => (
-                            <div key={idx} style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px',
-                              padding: '8px',
-                              backgroundColor: indicator.severity === 'warning' ? '#FFFBEB' : indicator.severity === 'critical' ? '#FEF2F2' : '#F3F4F6',
-                              borderRadius: '6px',
-                              borderLeft: `3px solid ${indicator.severity === 'warning' ? 'var(--color-warning)' : indicator.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-primary)'}`,
-                            }}>
-                              {indicator.severity === 'critical' ? <XCircle size={16} color="var(--color-danger)" /> : 
-                               indicator.severity === 'warning' ? <AlertCircle size={16} color="var(--color-warning)" /> :
-                               <Info size={16} color="var(--color-primary)" />}
-                              <span>{indicator.description}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{isZh ? '序列号检测' : 'Serial Number'}:</span>
+                        <span style={{ marginLeft: '8px', color: report.refurbishment.details.refurbProgram ? 'var(--color-warning)' : 'var(--color-success)' }}>
+                          {report.refurbishment.details.refurbProgram ? '⚠ ' + (isZh ? '官方翻新' : 'Refurbished') : '✓ ' + (isZh ? '正常' : 'Normal')}
+                        </span>
                       </div>
-                    )}
+                      <div>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{isZh ? '存储设备' : 'Storage'}:</span>
+                        <span style={{ marginLeft: '8px', color: report.refurbishment.replacedParts.includes('storage') ? 'var(--color-warning)' : 'var(--color-success)' }}>
+                          {report.refurbishment.replacedParts.includes('storage') ? '⚠ ' + (isZh ? '非原装' : 'Third-party') : '✓ ' + (isZh ? '原装' : 'Original')}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{isZh ? '显示屏' : 'Display'}:</span>
+                        <span style={{ marginLeft: '8px', color: report.refurbishment.replacedParts.includes('display') ? 'var(--color-warning)' : 'var(--color-success)' }}>
+                          {report.refurbishment.replacedParts.includes('display') ? '⚠ ' + (isZh ? '非原装' : 'Third-party') : '✓ ' + (isZh ? '原装' : 'Original')}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{isZh ? '企业管理' : 'Enterprise'}:</span>
+                        <span style={{ marginLeft: '8px', color: report.refurbishment.indicators.some(i => i.name === 'enterprise_managed') ? 'var(--color-warning)' : 'var(--color-success)' }}>
+                          {report.refurbishment.indicators.some(i => i.name === 'enterprise_managed') ? '⚠ ' + (isZh ? '是' : 'Yes') : '✓ ' + (isZh ? '否' : 'No')}
+                        </span>
+                      </div>
+                    </div>
                     
                     {/* Date Info */}
                     {(report.refurbishment.details.osInstallDate || report.refurbishment.details.batteryManufactureDate) && (
-                      <div style={{ marginTop: '12px', padding: '8px 12px', backgroundColor: 'var(--color-background)', borderRadius: '6px', fontSize: '13px' }}>
+                      <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
                         {report.refurbishment.details.osInstallDate && (
-                          <p style={{ margin: '4px 0' }}>{t('refurbishment.details.osInstallDate')}: {report.refurbishment.details.osInstallDate}</p>
+                          <p style={{ margin: '4px 0' }}>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>{t('refurbishment.details.osInstallDate')}:</span>
+                            <span style={{ marginLeft: '8px' }}>{report.refurbishment.details.osInstallDate}</span>
+                          </p>
                         )}
                         {report.refurbishment.details.batteryManufactureDate && (
-                          <p style={{ margin: '4px 0' }}>{t('refurbishment.details.batteryDate')}: {report.refurbishment.details.batteryManufactureDate}</p>
+                          <p style={{ margin: '4px 0' }}>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>{t('refurbishment.details.batteryDate')}:</span>
+                            <span style={{ marginLeft: '8px' }}>{report.refurbishment.details.batteryManufactureDate}</span>
+                          </p>
                         )}
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p style={{ fontSize: '14px', color: 'var(--color-success)' }}>
-                    ✓ {t('refurbishment.noIssues')}
-                  </p>
-                )}
+                  
+                  {/* No issues message */}
+                  {!report.refurbishment.isRefurbished && (
+                    <p style={{ fontSize: '14px', color: 'var(--color-success)', marginTop: '12px' }}>
+                      ✓ {t('refurbishment.noIssues')}
+                    </p>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -682,21 +747,6 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
                   : `${!report.interactive.speaker.leftChannel ? (isZh ? '左声道异常' : 'Left issue') : ''} ${!report.interactive.speaker.rightChannel ? (isZh ? '右声道异常' : 'Right issue') : ''}`}
               </p>
             </div>
-          </div>
-
-          {/* Raw Data */}
-          <h3 style={{ marginBottom: '16px' }}>{t('report.rawData')}</h3>
-          <div style={{ 
-            backgroundColor: 'var(--color-background)', 
-            padding: '16px', 
-            borderRadius: '8px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            overflow: 'auto',
-            maxHeight: '300px',
-            marginBottom: '24px'
-          }}>
-            <pre style={{ margin: 0 }}>{JSON.stringify(report.rawData, null, 2)}</pre>
           </div>
 
           {/* Disclaimer */}

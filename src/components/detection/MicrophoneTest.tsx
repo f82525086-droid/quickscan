@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Square, Play, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Mic, Square, Play, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Command } from '@tauri-apps/plugin-shell';
 
 interface MicrophoneTestProps {
   onComplete: (working: boolean) => void;
@@ -85,6 +86,19 @@ export function MicrophoneTest({ onComplete }: MicrophoneTestProps) {
     }
   };
 
+  const openSystemSettings = async () => {
+    try {
+      await Command.create('open', ['x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone']).execute();
+    } catch (e) {
+      console.error('Failed to open system settings:', e);
+      try {
+        await Command.create('open', ['-a', 'System Preferences']).execute();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -124,12 +138,18 @@ export function MicrophoneTest({ onComplete }: MicrophoneTestProps) {
               </p>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: '12px' }}>
                 {isZh 
-                  ? '请在系统弹窗中点击"允许"，或前往「系统设置 → 隐私与安全性 → 麦克风」中允许秒验访问麦克风。' 
-                  : 'Please click "Allow" in the system dialog, or go to System Settings → Privacy & Security → Microphone to allow QuickScan.'}
+                  ? '请前往「系统设置 → 隐私与安全性 → 麦克风」中允许秒验访问麦克风，然后返回点击重试。' 
+                  : 'Please go to System Settings → Privacy & Security → Microphone to allow QuickScan, then come back and retry.'}
               </p>
-              <button className="btn btn-primary" onClick={startRecording}>
-                {isZh ? '重新请求权限' : 'Request Permission Again'}
-              </button>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button className="btn btn-primary" onClick={openSystemSettings}>
+                  <ExternalLink size={18} />
+                  {isZh ? '打开系统设置' : 'Open System Settings'}
+                </button>
+                <button className="btn btn-secondary" onClick={startRecording}>
+                  {isZh ? '重试' : 'Retry'}
+                </button>
+              </div>
             </div>
           )}
 

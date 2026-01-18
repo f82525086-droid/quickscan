@@ -181,78 +181,54 @@ fn get_battery_info() -> Option<BatteryInfo> {
 
 #[cfg(target_os = "macos")]
 fn get_battery_info_macos() -> Option<BatteryInfo> {
-    let output = Command::new("ioreg")
-        .args(["-r", "-c", "AppleSmartBattery", "-w0"])
+    let output = Command::new("system_profiler")
+        .args(["SPPowerDataType", "-json"])
         .output()
         .ok()?;
     
     let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout).ok()?;
     
-    let mut cycle_count: u32 = 0;
-    let mut design_capacity: u32 = 0;
-    let mut max_capacity: u32 = 0;
-    let mut raw_max_capacity: u32 = 0;
-    let mut current_capacity: u32 = 0;
-    let mut is_charging = false;
-    let mut temperature: Option<f64> = None;
+    let power_data = json.get("SPPowerDataType")?.as_array()?;
     
-    for line in stdout.lines() {
-        let line = line.trim();
-        if line.contains("\"CycleCount\"") && !line.contains("CycleCountLastQmax") {
-            if let Some(val) = extract_number(line) {
-                cycle_count = val as u32;
-            }
-        } else if line.contains("\"DesignCapacity\"") && !line.contains("DesignCapacityUI") {
-            if let Some(val) = extract_number(line) {
-                design_capacity = val as u32;
-            }
-        } else if line.contains("\"AppleRawMaxCapacity\"") {
-            // 新版 macOS 使用 AppleRawMaxCapacity 作为真实最大容量
-            if let Some(val) = extract_number(line) {
-                raw_max_capacity = val as u32;
-            }
-        } else if line.contains("\"MaxCapacity\"") && !line.contains("MaxCapacityUI") && !line.contains("AppleRawMaxCapacity") {
-            if let Some(val) = extract_number(line) {
-                max_capacity = val as u32;
-            }
-        } else if line.contains("\"CurrentCapacity\"") && !line.contains("CurrentCapacityUI") {
-            if let Some(val) = extract_number(line) {
-                current_capacity = val as u32;
-            }
-        } else if line.contains("\"IsCharging\"") {
-            is_charging = line.contains("Yes");
-        } else if line.contains("\"Temperature\"") {
-            if let Some(val) = extract_number(line) {
-                temperature = Some(val as f64 / 100.0);
-            }
-        }
-    }
+    // Find battery information section
+    let battery_info = power_data.iter()
+        .find(|item| item.get("_name").and_then(|n| n.as_str()) == Some("spbattery_information"))?;
     
-    // 优先使用 AppleRawMaxCapacity（新版 macOS），否则用 MaxCapacity
-    let actual_max_capacity = if raw_max_capacity > 0 {
-        raw_max_capacity
-    } else if max_capacity > 100 {
-        // 旧版 macOS，MaxCapacity 是 mAh 值
-        max_capacity
-    } else {
-        // MaxCapacity 是百分比，无法计算真实健康度
-        design_capacity
-    };
+    // Extract charge info
+    let charge_info = battery_info.get("sppower_battery_charge_info")?;
+    let is_charging = charge_info.get("sppower_battery_is_charging")
+        .and_then(|v| v.as_str())
+        .map(|s| s == "TRUE")
+        .unwrap_or(false);
+    let current_capacity = charge_info.get("sppower_battery_state_of_charge")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
     
-    let health = if design_capacity > 0 && actual_max_capacity > 0 {
-        (actual_max_capacity as f64 / design_capacity as f64) * 100.0
-    } else {
-        100.0
-    };
+    // Extract health info
+    let health_info = battery_info.get("sppower_battery_health_info")?;
+    let cycle_count = health_info.get("sppower_battery_cycle_count")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
+    
+    // Parse health percentage from string like "96%"
+    let health = health_info.get("sppower_battery_health_maximum_capacity")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.trim_end_matches('%').parse::<f64>().ok())
+        .unwrap_or(100.0);
+    
+    // Calculate max_capacity based on health percentage (assuming design_capacity as 100 units)
+    let design_capacity: u32 = 100;
+    let max_capacity = health as u32;
     
     Some(BatteryInfo {
         health,
         cycle_count,
         design_capacity,
-        max_capacity: actual_max_capacity,
+        max_capacity,
         current_capacity,
         is_charging,
-        temperature,
+        temperature: None, // SPPowerDataType doesn't provide temperature
     })
 }
 
@@ -279,14 +255,6 @@ fn get_battery_info_windows() -> Option<BatteryInfo> {
         is_charging: false,
         temperature: None,
     })
-}
-
-fn extract_number(line: &str) -> Option<i64> {
-    line.split('=')
-        .nth(1)?
-        .trim()
-        .parse::<i64>()
-        .ok()
 }
 
 #[tauri::command]
@@ -457,14 +425,12 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
             indicators.push(RefurbishmentIndicator {
                 name: "serial_refurb".to_string(),
                 detected: true,
-                description: "序列号以 F 开头，表示 Apple 官方翻新机".to_string(),
+                description: "serial_starts_with_f".to_string(),
                 severity: "info".to_string(),
             });
         }
         
-        // Extract manufacture date from serial (for older serials)
-        // Characters 4-5 often encode year/week
-        serial_date = Some(format!("序列号: {}", &serial[..4]));
+        serial_date = Some(serial[..4].to_string());
     }
     
     // 2. Check for refurbishment flag in NVRAM/IORegistry
@@ -480,16 +446,39 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
             indicators.push(RefurbishmentIndicator {
                 name: "ioreg_refurb".to_string(),
                 detected: true,
-                description: "系统固件中发现翻新标记".to_string(),
+                description: "firmware_refurb_flag".to_string(),
                 severity: "info".to_string(),
             });
         }
         
-        // Check battery manufacture date
+        // Check battery manufacture date from serial number
+        // Battery serial format: F8Y201400XQQ1LTAH - extract manufacture info
         for line in stdout.lines() {
-            if line.contains("BatteryManufactureDate") || line.contains("ManufactureDate") {
-                if let Some(date_part) = line.split('=').nth(1) {
-                    battery_date = Some(date_part.trim().to_string());
+            if line.contains("\"Serial\"") && line.contains("AppleSmartBattery") {
+                if let Some(serial_part) = line.split('"').nth(3) {
+                    // Extract year/week from battery serial if available
+                    battery_date = Some(serial_part.to_string());
+                }
+            }
+        }
+        
+        // Also try to get battery serial from system_profiler
+        if battery_date.is_none() {
+            if let Ok(output) = Command::new("system_profiler")
+                .args(["SPPowerDataType", "-json"])
+                .output()
+            {
+                let power_stdout = String::from_utf8_lossy(&output.stdout);
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&power_stdout) {
+                    if let Some(power_data) = json.get("SPPowerDataType").and_then(|v| v.as_array()) {
+                        for item in power_data {
+                            if let Some(model_info) = item.get("sppower_battery_model_info") {
+                                if let Some(serial) = model_info.get("sppower_battery_serial_number") {
+                                    battery_date = serial.as_str().map(|s| s.to_string());
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -506,58 +495,41 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
         }
     }
     
-    // 4. Check system profiler for hardware changes
-    if let Ok(output) = Command::new("system_profiler")
-        .args(["SPHardwareDataType", "-json"])
-        .output()
-    {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
-            if let Some(hw_data) = json.get("SPHardwareDataType") {
-                if let Some(arr) = hw_data.as_array() {
-                    if let Some(first) = arr.first() {
-                        // Check provisioning UDID for enterprise management
-                        if first.get("provisioning_UDID").is_some() {
-                            indicators.push(RefurbishmentIndicator {
-                                name: "enterprise_managed".to_string(),
-                                detected: true,
-                                description: "设备曾被企业管理，可能是退役设备".to_string(),
-                                severity: "warning".to_string(),
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // 5. Check for battery replacement
-    if let Ok(output) = Command::new("ioreg")
-        .args(["-r", "-c", "AppleSmartBattery", "-w0"])
+    // 4. Check for enterprise management (MDM enrollment)
+    if let Ok(output) = Command::new("profiles")
+        .args(["status", "-type", "enrollment"])
         .output()
     {
         let stdout = String::from_utf8_lossy(&output.stdout);
         
-        // Very low cycle count with old serial might indicate battery replacement
-        let mut cycle_count: u32 = 0;
-        for line in stdout.lines() {
-            if line.contains("\"CycleCount\"") && !line.contains("CycleCountLastQmax") {
-                if let Some(val) = extract_number(line.trim()) {
-                    cycle_count = val as u32;
-                }
-            }
-        }
+        // Check for DEP (Device Enrollment Program) enrollment
+        let dep_enrolled = stdout.lines()
+            .any(|line| line.contains("Enrolled via DEP:") && line.contains("Yes"));
         
-        // If cycle count is very low but device appears old, might be replaced battery
-        if cycle_count < 50 {
+        // Check for MDM enrollment
+        let mdm_enrolled = stdout.lines()
+            .any(|line| line.contains("MDM enrollment:") && line.contains("Yes"));
+        
+        if dep_enrolled || mdm_enrolled {
+            let description = if dep_enrolled && mdm_enrolled {
+                "enterprise_dep_and_mdm".to_string()
+            } else if dep_enrolled {
+                "enterprise_dep_enrolled".to_string()
+            } else {
+                "enterprise_mdm_enrolled".to_string()
+            };
+            
             indicators.push(RefurbishmentIndicator {
-                name: "low_battery_cycles".to_string(),
+                name: "enterprise_managed".to_string(),
                 detected: true,
-                description: format!("电池循环次数极低 ({} 次)，可能是新更换的电池", cycle_count),
-                severity: "info".to_string(),
+                description,
+                severity: "warning".to_string(),
             });
         }
     }
+    
+    // 5. Check for battery replacement - only flag if cycle count is suspiciously low for device age
+    // Skip this check as it causes false positives
     
     // 6. Check storage health for replacement indicators
     if let Ok(output) = Command::new("diskutil")
@@ -579,17 +551,17 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
         
         // Check if internal SSD seems to be third-party
         if is_internal && !device_model.is_empty() {
-            let apple_ssds = ["APPLE SSD", "Apple SSD", "AP"];
+            let apple_ssds = ["APPLE SSD", "Apple SSD", "AP", "Macintosh"];
             let is_apple_ssd = apple_ssds.iter().any(|s| device_model.contains(s));
             
-            if !is_apple_ssd && !device_model.contains("Macintosh") {
+            if !is_apple_ssd {
                 indicators.push(RefurbishmentIndicator {
                     name: "third_party_storage".to_string(),
                     detected: true,
-                    description: format!("检测到非原装存储设备: {}", device_model),
+                    description: format!("third_party_storage:{}", device_model),
                     severity: "warning".to_string(),
                 });
-                replaced_parts.push("存储硬盘 (SSD)".to_string());
+                replaced_parts.push("storage".to_string());
             }
         }
     }
@@ -616,10 +588,10 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
                                     indicators.push(RefurbishmentIndicator {
                                         name: "third_party_display".to_string(),
                                         detected: true,
-                                        description: format!("检测到非原装显示屏: {}", vendor_str),
+                                        description: format!("third_party_display:{}", vendor_str),
                                         severity: "warning".to_string(),
                                     });
-                                    replaced_parts.push("显示屏".to_string());
+                                    replaced_parts.push("display".to_string());
                                 }
                             }
                         }
@@ -663,7 +635,7 @@ fn check_refurbishment_macos() -> RefurbishmentCheck {
 #[cfg(target_os = "windows")]
 fn check_refurbishment_windows() -> RefurbishmentCheck {
     let mut indicators: Vec<RefurbishmentIndicator> = vec![];
-    let mut replaced_parts: Vec<String> = vec![];
+    let replaced_parts: Vec<String> = vec![];
     let mut os_install_date: Option<String> = None;
     
     // 1. Check Windows install date
@@ -687,37 +659,13 @@ fn check_refurbishment_windows() -> RefurbishmentCheck {
             indicators.push(RefurbishmentIndicator {
                 name: "bios_refurb".to_string(),
                 detected: true,
-                description: "BIOS 中发现翻新标记".to_string(),
+                description: "bios_refurb_flag".to_string(),
                 severity: "info".to_string(),
             });
         }
     }
     
-    // 3. Check battery info
-    if let Ok(output) = Command::new("powershell")
-        .args(["-Command", "Get-WmiObject Win32_Battery | Select-Object DesignCapacity,FullChargeCapacity,EstimatedChargeRemaining | ConvertTo-Json"])
-        .output()
-    {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
-            if let Some(design) = json.get("DesignCapacity").and_then(|v| v.as_u64()) {
-                if let Some(full) = json.get("FullChargeCapacity").and_then(|v| v.as_u64()) {
-                    let health = (full as f64 / design as f64) * 100.0;
-                    // Very high health on older device might indicate battery replacement
-                    if health > 95.0 {
-                        indicators.push(RefurbishmentIndicator {
-                            name: "high_battery_health".to_string(),
-                            detected: true,
-                            description: format!("电池健康度异常高 ({:.1}%)，可能是新更换的电池", health),
-                            severity: "info".to_string(),
-                        });
-                    }
-                }
-            }
-        }
-    }
-    
-    // 4. Check for OEM info changes
+    // 3. Check for OEM info changes
     if let Ok(output) = Command::new("powershell")
         .args(["-Command", "Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\OEMInformation' 2>$null | ConvertTo-Json"])
         .output()
@@ -727,7 +675,7 @@ fn check_refurbishment_windows() -> RefurbishmentCheck {
             indicators.push(RefurbishmentIndicator {
                 name: "oem_refurb".to_string(),
                 detected: true,
-                description: "OEM 信息中发现翻新标记".to_string(),
+                description: "oem_refurb_flag".to_string(),
                 severity: "info".to_string(),
             });
         }

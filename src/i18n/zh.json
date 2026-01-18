@@ -133,7 +133,9 @@
     "instruction": "请确认左右声道是否都能正常发声",
     "leftChannel": "左声道",
     "rightChannel": "右声道",
-    "playTest": "播放测试音"
+    "playTest": "播放测试音",
+    "bothNormal": "两侧正常",
+    "hasIssue": "有异常"
   },
   "report": {
     "title": "检测报告",
@@ -178,6 +180,23 @@
     },
     "indicators": "检测指标",
     "replacedParts": "更换部件",
+    "parts": {
+      "storage": "存储硬盘 (SSD)",
+      "display": "显示屏",
+      "battery": "电池"
+    },
+    "indicatorDesc": {
+      "serial_starts_with_f": "序列号以 F 开头，表示 Apple 官方翻新机",
+      "firmware_refurb_flag": "系统固件中发现翻新标记",
+      "enterprise_managed_device": "设备曾被企业管理，可能是退役设备",
+      "enterprise_dep_enrolled": "设备已加入 DEP（设备注册计划），可能是企业设备",
+      "enterprise_mdm_enrolled": "设备已加入 MDM（移动设备管理），可能是企业设备",
+      "enterprise_dep_and_mdm": "设备同时加入 DEP 和 MDM，确认为企业管理设备",
+      "third_party_storage": "检测到非原装存储设备",
+      "third_party_display": "检测到非原装显示屏",
+      "bios_refurb_flag": "BIOS 中发现翻新标记",
+      "oem_refurb_flag": "OEM 信息中发现翻新标记"
+    },
     "details": {
       "serialDate": "序列号生产日期",
       "osInstallDate": "系统安装日期",

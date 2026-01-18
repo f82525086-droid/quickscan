@@ -133,7 +133,9 @@
     "instruction": "Please confirm both left and right channels are working",
     "leftChannel": "Left Channel",
     "rightChannel": "Right Channel",
-    "playTest": "Play Test Sound"
+    "playTest": "Play Test Sound",
+    "bothNormal": "Both Normal",
+    "hasIssue": "Has Issue"
   },
   "report": {
     "title": "Detection Report",
@@ -178,6 +180,23 @@
     },
     "indicators": "Indicators",
     "replacedParts": "Replaced Parts",
+    "parts": {
+      "storage": "Storage (SSD)",
+      "display": "Display",
+      "battery": "Battery"
+    },
+    "indicatorDesc": {
+      "serial_starts_with_f": "Serial number starts with F, indicating Apple Certified Refurbished",
+      "firmware_refurb_flag": "Refurbishment flag found in system firmware",
+      "enterprise_managed_device": "Device was enterprise managed, may be a retired device",
+      "enterprise_dep_enrolled": "Device enrolled in DEP (Device Enrollment Program), likely enterprise device",
+      "enterprise_mdm_enrolled": "Device enrolled in MDM (Mobile Device Management), likely enterprise device",
+      "enterprise_dep_and_mdm": "Device enrolled in both DEP and MDM, confirmed enterprise managed",
+      "third_party_storage": "Non-original storage device detected",
+      "third_party_display": "Non-original display detected",
+      "bios_refurb_flag": "Refurbishment flag found in BIOS",
+      "oem_refurb_flag": "Refurbishment flag found in OEM information"
+    },
     "details": {
       "serialDate": "Serial manufacture date",
       "osInstallDate": "OS install date",

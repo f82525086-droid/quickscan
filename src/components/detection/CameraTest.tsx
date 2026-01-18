@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Command } from '@tauri-apps/plugin-shell';
 
 interface CameraTestProps {
   onComplete: (working: boolean) => void;
@@ -26,11 +27,11 @@ export function CameraTest({ onComplete }: CameraTestProps) {
     try {
       setIsLoading(true);
       setError(null);
-      setPermissionDenied(false);
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user' } 
       });
       setStream(mediaStream);
+      setPermissionDenied(false);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -44,6 +45,20 @@ export function CameraTest({ onComplete }: CameraTestProps) {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const openSystemSettings = async () => {
+    try {
+      await Command.create('open', ['x-apple.systempreferences:com.apple.preference.security?Privacy_Camera']).execute();
+    } catch (e) {
+      console.error('Failed to open system settings:', e);
+      // Fallback: open System Settings app
+      try {
+        await Command.create('open', ['-a', 'System Preferences']).execute();
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -100,12 +115,18 @@ export function CameraTest({ onComplete }: CameraTestProps) {
                 </p>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
                   {isZh 
-                    ? '请在系统弹窗中点击"允许"，或前往「系统设置 → 隐私与安全性 → 摄像头」中允许秒验访问摄像头。' 
-                    : 'Please click "Allow" in the system dialog, or go to System Settings → Privacy & Security → Camera to allow QuickScan.'}
+                    ? '请前往「系统设置 → 隐私与安全性 → 摄像头」中允许秒验访问摄像头，然后返回点击重试。' 
+                    : 'Please go to System Settings → Privacy & Security → Camera to allow QuickScan, then come back and retry.'}
                 </p>
-                <button className="btn btn-primary" onClick={startCamera}>
-                  {isZh ? '重新请求权限' : 'Request Permission Again'}
-                </button>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button className="btn btn-primary" onClick={openSystemSettings}>
+                    <ExternalLink size={18} />
+                    {isZh ? '打开系统设置' : 'Open System Settings'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={startCamera}>
+                    {isZh ? '重试' : 'Retry'}
+                  </button>
+                </div>
               </div>
             )}
             <video

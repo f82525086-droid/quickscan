@@ -138,14 +138,14 @@ export function SpeakerTest({ onComplete }: SpeakerTestProps) {
               onClick={() => onComplete({ left: true, right: true })}
             >
               <CheckCircle size={20} />
-              两侧正常
+              {t('speaker.bothNormal')}
             </button>
             <button 
               className="btn btn-danger" 
               onClick={() => onComplete({ left: leftTested, right: rightTested })}
             >
               <XCircle size={20} />
-              有异常
+              {t('speaker.hasIssue')}
             </button>
           </div>
         </div>
