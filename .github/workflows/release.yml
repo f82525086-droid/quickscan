@@ -14,9 +14,9 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: --target universal-apple-darwin
+            args: --target aarch64-apple-darwin
           - platform: windows-latest
-            args: ''
+            args: --bundles nsis
 
     runs-on: ${{ matrix.platform }}
 
@@ -43,9 +43,7 @@ jobs:
 
       - name: Install Apple target (macOS only)
         if: matrix.platform == 'macos-latest'
-        run: |
-          rustup target add aarch64-apple-darwin
-          rustup target add x86_64-apple-darwin
+        run: rustup target add aarch64-apple-darwin
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -57,8 +55,8 @@ jobs:
           releaseBody: |
             ## 下载说明
             
-            - **macOS**: 下载 `.dmg` 文件，双击安装
-            - **Windows**: 下载 `.msi` 文件，双击安装
+            - **macOS**: 下载 `.dmg` 文件，双击安装（仅支持 Apple Silicon）
+            - **Windows**: 下载 `.exe` 安装程序，双击安装
             
             ## 更新内容
             
