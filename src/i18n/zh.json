@@ -1,0 +1,196 @@
+{
+  "app": {
+    "name": "秒验",
+    "tagline": "二手电脑一键检测"
+  },
+  "nav": {
+    "home": "首页",
+    "detection": "开始检测",
+    "report": "检测报告"
+  },
+  "home": {
+    "title": "快速检测您的二手电脑",
+    "description": "专业的硬件检测工具，帮您识别配置造假、评估整机状况",
+    "startButton": "开始检测",
+    "features": {
+      "hardware": "硬件匹配",
+      "hardwareDesc": "检测 CPU/内存/硬盘 真实配置",
+      "battery": "电池健康",
+      "batteryDesc": "健康度、循环次数评估",
+      "storage": "硬盘状态",
+      "storageDesc": "SMART 状态、使用时长",
+      "interactive": "功能检测",
+      "interactiveDesc": "屏幕、键盘、摄像头等"
+    }
+  },
+  "detection": {
+    "title": "设备检测",
+    "running": "正在检测...",
+    "complete": "检测完成",
+    "progress": "进度",
+    "categories": {
+      "hardware": "硬件信息",
+      "system": "整机状态",
+      "battery": "电池状态",
+      "storage": "硬盘状态",
+      "screen": "屏幕检测",
+      "keyboard": "键盘检测",
+      "trackpad": "触控板检测",
+      "camera": "摄像头检测",
+      "microphone": "麦克风检测",
+      "speaker": "扬声器检测",
+      "network": "网络模块",
+      "sensors": "传感器",
+      "refurbishment": "翻新检测"
+    },
+    "status": {
+      "passed": "通过",
+      "warning": "注意",
+      "failed": "异常",
+      "pending": "待检测",
+      "testing": "检测中"
+    }
+  },
+  "hardware": {
+    "cpu": "处理器",
+    "memory": "内存",
+    "storage": "存储",
+    "serialNumber": "序列号",
+    "verified": "已验证",
+    "unverified": "未验证",
+    "genuine": "真实",
+    "suspicious": "可疑"
+  },
+  "battery": {
+    "health": "电池健康度",
+    "cycleCount": "循环次数",
+    "designCapacity": "设计容量",
+    "currentCapacity": "当前容量",
+    "rating": {
+      "excellent": "优秀",
+      "good": "良好",
+      "fair": "一般",
+      "poor": "较差"
+    },
+    "reference": {
+      "health": "参考标准：≥80% 良好，60-79% 一般，<60% 较差",
+      "cycle": "参考标准：macOS 设计寿命 1000 次，Windows 通常 300-500 次"
+    }
+  },
+  "storage": {
+    "smart": "SMART 状态",
+    "powerOnHours": "通电时长",
+    "healthy": "健康",
+    "warning": "警告",
+    "failing": "故障"
+  },
+  "screen": {
+    "title": "屏幕坏点检测",
+    "instruction": "请仔细观察屏幕，检查是否有亮点或暗点",
+    "colors": {
+      "red": "红色",
+      "green": "绿色",
+      "blue": "蓝色",
+      "white": "白色",
+      "black": "黑色"
+    },
+    "hasDeadPixel": "发现坏点",
+    "noDeadPixel": "无坏点",
+    "nextColor": "下一颜色",
+    "finish": "完成检测"
+  },
+  "keyboard": {
+    "title": "键盘检测",
+    "instruction": "请依次按下所有按键，已按下的按键会高亮显示",
+    "tested": "已检测",
+    "remaining": "剩余",
+    "allPassed": "全部按键正常"
+  },
+  "trackpad": {
+    "title": "触控板检测",
+    "instruction": "请在下方区域测试点击、滑动和手势操作",
+    "click": "点击",
+    "drag": "拖动",
+    "gesture": "手势",
+    "hint": "点击测试区域 3 次 | 拖动绘制线条 | 双指滑动测试手势"
+  },
+  "camera": {
+    "title": "摄像头检测",
+    "instruction": "请确认摄像头画面是否正常",
+    "working": "摄像头正常",
+    "notWorking": "摄像头异常"
+  },
+  "microphone": {
+    "title": "麦克风检测",
+    "instruction": "请说几句话，然后回放确认录音是否正常",
+    "record": "开始录音",
+    "stop": "停止录音",
+    "play": "播放录音",
+    "rerecord": "重新录制"
+  },
+  "speaker": {
+    "title": "扬声器检测",
+    "instruction": "请确认左右声道是否都能正常发声",
+    "leftChannel": "左声道",
+    "rightChannel": "右声道",
+    "playTest": "播放测试音"
+  },
+  "report": {
+    "title": "检测报告",
+    "generated": "生成时间",
+    "deviceOverview": "设备概览",
+    "overallScore": "整体评分",
+    "summary": "检测总评",
+    "details": "详细检测结果",
+    "rawData": "原始数据",
+    "disclaimer": "免责声明",
+    "disclaimerText": "本报告由秒验自动生成，\"翻新机/部件更换\"等检测结果仅供参考，不构成任何法律依据。",
+    "downloadPdf": "下载 PDF 报告",
+    "downloadComplete": "PDF 报告已下载完成！",
+    "passed": "通过",
+    "warning": "注意",
+    "failed": "异常"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "出错了",
+    "retry": "重试",
+    "back": "返回",
+    "next": "下一步",
+    "skip": "跳过",
+    "confirm": "确认",
+    "cancel": "取消",
+    "yes": "是",
+    "no": "否",
+    "referenceOnly": "仅供参考",
+    "normal": "正常",
+    "abnormal": "异常"
+  },
+  "refurbishment": {
+    "title": "翻新/部件更换检测",
+    "detected": "检测到翻新迹象",
+    "notDetected": "未检测到翻新",
+    "partsReplaced": "{{count}} 个部件被更换",
+    "confidence": {
+      "high": "高可信度",
+      "medium": "中等可信度",
+      "low": "低可信度"
+    },
+    "indicators": "检测指标",
+    "replacedParts": "更换部件",
+    "details": {
+      "serialDate": "序列号生产日期",
+      "osInstallDate": "系统安装日期",
+      "batteryDate": "电池生产日期",
+      "storageDate": "硬盘首次使用",
+      "dateMismatch": "日期不匹配"
+    },
+    "severity": {
+      "info": "信息",
+      "warning": "警告",
+      "critical": "严重"
+    },
+    "noIssues": "未发现翻新或部件更换迹象",
+    "refurbProgram": "翻新计划"
+  }
+}
