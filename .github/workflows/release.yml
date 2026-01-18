@@ -63,4 +63,5 @@ jobs:
             请查看 [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
           releaseDraft: false
           prerelease: false
+          includeVersion: false
           args: ${{ matrix.args }}
