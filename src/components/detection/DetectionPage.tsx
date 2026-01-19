@@ -259,7 +259,8 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
       }
     }
 
-    continueFromNextStep(testId);
+    // Delay before continuing to next step to allow resource cleanup
+    setTimeout(() => continueFromNextStep(testId), 100);
   };
 
   const handleTestSkip = (testId: string) => {
@@ -287,7 +288,8 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
         break;
     }
 
-    continueFromNextStep(testId);
+    // Delay before continuing to next step to allow resource cleanup
+    setTimeout(() => continueFromNextStep(testId), 100);
   };
 
   const continueFromNextStep = async (currentTestId: string) => {

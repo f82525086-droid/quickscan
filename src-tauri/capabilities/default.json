@@ -6,6 +6,10 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-write",
+    "fs:write-all",
     "shell:allow-open",
     {
       "identifier": "shell:allow-execute",

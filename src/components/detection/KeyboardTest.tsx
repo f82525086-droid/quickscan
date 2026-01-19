@@ -52,17 +52,26 @@ export function KeyboardTest({ onComplete, onSkip }: KeyboardTestProps) {
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    e.preventDefault();
-    // 只记录布局中存在的按键
+    // Only prevent default for keys we're tracking, avoid blocking system shortcuts
     if (VALID_KEYS_SET.has(e.code)) {
+      e.preventDefault();
       setPressedKeys(prev => new Set([...prev, e.code]));
     }
   }, []);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [handleKeyDown]);
+
+  // Cleanup pressed keys state on unmount
+  useEffect(() => {
+    return () => {
+      setPressedKeys(new Set());
+    };
+  }, []);
 
   // 计算已测试的有效按键数量
   const testedCount = [...pressedKeys].filter(key => VALID_KEYS_SET.has(key)).length;

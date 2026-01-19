@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Mic, Square, Play, CheckCircle, XCircle, AlertTriangle, ExternalLink, SkipForward } from 'lucide-react';
 import { Command } from '@tauri-apps/plugin-shell';
@@ -23,12 +23,67 @@ export function MicrophoneTest({ onComplete, onSkip }: MicrophoneTestProps) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Cleanup function to stop all audio resources
+  const cleanup = () => {
+    try {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          console.error('Error stopping recorder:', e);
+        }
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        try {
+          audioContextRef.current.close();
+        } catch (e) {
+          console.error('Error closing audio context:', e);
+        }
+        audioContextRef.current = null;
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            track.stop();
+          } catch (e) {
+            console.error('Error stopping track:', e);
+          }
+        });
+        streamRef.current = null;
+      }
+      if (isMountedRef.current) {
+        setVolume(0);
+        setIsRecording(false);
+      }
+    } catch (e) {
+      console.error('Error in cleanup:', e);
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      cleanup();
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
+      cleanup(); // Clean up any existing resources first
       setError(null);
       setPermissionDenied(false);
+      setAudioBlob(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       
       // Setup audio analysis for volume meter
       audioContextRef.current = new AudioContext();
@@ -232,21 +287,21 @@ export function MicrophoneTest({ onComplete, onSkip }: MicrophoneTestProps) {
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button 
               className="btn btn-success" 
-              onClick={() => onComplete(true)}
+              onClick={() => { cleanup(); setTimeout(() => onComplete(true), 50); }}
             >
               <CheckCircle size={20} />
               {t('common.normal')}
             </button>
             <button 
               className="btn btn-danger" 
-              onClick={() => onComplete(false)}
+              onClick={() => { cleanup(); setTimeout(() => onComplete(false), 50); }}
             >
               <XCircle size={20} />
               {t('common.abnormal')}
             </button>
             <button 
               className="btn btn-secondary" 
-              onClick={onSkip}
+              onClick={() => { cleanup(); setTimeout(() => onSkip(), 50); }}
             >
               <SkipForward size={20} />
               {t('common.skip')}

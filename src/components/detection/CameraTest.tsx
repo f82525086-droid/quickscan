@@ -12,26 +12,51 @@ export function CameraTest({ onComplete, onSkip }: CameraTestProps) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isMountedRef = useRef(true);
   const [error, setError] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Cleanup function using ref to ensure we always get the current stream
+  const stopCamera = () => {
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            track.stop();
+          } catch (e) {
+            console.error('Error stopping track:', e);
+          }
+        });
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    } catch (e) {
+      console.error('Error in stopCamera:', e);
+    }
+  };
+
   useEffect(() => {
+    isMountedRef.current = true;
     startCamera();
     return () => {
+      isMountedRef.current = false;
       stopCamera();
     };
   }, []);
 
   const startCamera = async () => {
     try {
+      stopCamera(); // Clean up any existing stream first
       setIsLoading(true);
       setError(null);
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user' } 
       });
-      setStream(mediaStream);
+      streamRef.current = mediaStream;
       setPermissionDenied(false);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -63,21 +88,23 @@ export function CameraTest({ onComplete, onSkip }: CameraTestProps) {
     }
   };
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  };
-
   const handleFinish = (working: boolean) => {
     stopCamera();
-    onComplete(working);
+    // Use setTimeout to ensure cleanup completes before navigation
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        onComplete(working);
+      }
+    }, 50);
   };
 
   const handleSkip = () => {
     stopCamera();
-    onSkip();
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        onSkip();
+      }
+    }, 50);
   };
 
   return (

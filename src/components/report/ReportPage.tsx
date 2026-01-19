@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeFile } from '@tauri-apps/plugin-fs';
 import { 
   Download, ArrowLeft, CheckCircle, AlertCircle, XCircle,
   Cpu, Battery, HardDrive, Monitor, Keyboard, Wifi, Mouse, Camera, Mic, Volume2,
@@ -29,6 +31,8 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
   const { t, i18n } = useTranslation();
   const reportRef = useRef<HTMLDivElement>(null);
   const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const isZh = i18n.language === 'zh';
 
   // Translate indicator description from key
@@ -289,35 +293,63 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
   const downloadPDF = async () => {
     if (!reportRef.current) return;
 
-    const canvas = await html2canvas(reportRef.current, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    });
+    setIsDownloading(true);
+    setDownloadError(null);
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    try {
+      // Show save dialog to let user choose location
+      const filePath = await save({
+        defaultPath: `QuickScan_Report_${report.id}.pdf`,
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      });
 
-    // Handle multi-page if content is too long
-    if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-      let position = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      while (position < pdfHeight) {
-        if (position > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
-        position += pageHeight;
+      if (!filePath) {
+        setIsDownloading(false);
+        return; // User cancelled
       }
-    } else {
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Handle multi-page if content is too long
+      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+        let position = 0;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        while (position < pdfHeight) {
+          if (position > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
+          position += pageHeight;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
+      
+      // Get PDF as array buffer and write to chosen location
+      const pdfOutput = pdf.output('arraybuffer');
+      const pdfBytes = new Uint8Array(pdfOutput);
+      
+      // writeFile expects path as string and data as Uint8Array
+      await writeFile(filePath, pdfBytes);
+      
+      // Show download success notification
+      setShowDownloadSuccess(true);
+      setTimeout(() => setShowDownloadSuccess(false), 3000);
+    } catch (error: unknown) {
+      console.error('Failed to download PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setDownloadError(isZh ? `下载失败: ${errorMessage}` : `Download failed: ${errorMessage}`);
+      setTimeout(() => setDownloadError(null), 8000);
+    } finally {
+      setIsDownloading(false);
     }
-    
-    pdf.save(`QuickScan_Report_${report.id}.pdf`);
-    
-    // Show download success notification
-    setShowDownloadSuccess(true);
-    setTimeout(() => setShowDownloadSuccess(false), 3000);
   };
 
   const formatDate = (isoString: string) => {
@@ -366,6 +398,28 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
           {t('report.downloadComplete')}
         </div>
       )}
+      {/* Download Error Notification */}
+      {downloadError && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'var(--color-danger)',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          animation: 'fadeIn 0.3s ease-out',
+        }}>
+          <XCircle size={20} />
+          {downloadError}
+        </div>
+      )}
       <div className="container">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -374,9 +428,9 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
             </button>
             <h1 className="section-title" style={{ margin: 0 }}>{t('report.title')}</h1>
           </div>
-          <button className="btn btn-primary" onClick={downloadPDF}>
+          <button className="btn btn-primary" onClick={downloadPDF} disabled={isDownloading}>
             <Download size={20} />
-            {t('report.downloadPdf')}
+            {isDownloading ? (isZh ? '下载中...' : 'Downloading...') : t('report.downloadPdf')}
           </button>
         </div>
 

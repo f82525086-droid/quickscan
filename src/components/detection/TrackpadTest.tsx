@@ -35,7 +35,7 @@ export function TrackpadTest({ onComplete, onSkip }: TrackpadTestProps) {
     // Draw drag path
     if (dragPath.length > 1) {
       ctx.beginPath();
-      ctx.strokeStyle = 'var(--color-primary)';
+      ctx.strokeStyle = '#3b82f6'; // Use hex color instead of CSS variable
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -60,7 +60,11 @@ export function TrackpadTest({ onComplete, onSkip }: TrackpadTestProps) {
     if (!isDragging) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
-      setDragPath(prev => [...prev, { x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+      // Limit path length to prevent memory issues
+      setDragPath(prev => {
+        const newPath = [...prev, { x: e.clientX - rect.left, y: e.clientY - rect.top }];
+        return newPath.length > 500 ? newPath.slice(-500) : newPath;
+      });
     }
   };
 
@@ -72,8 +76,8 @@ export function TrackpadTest({ onComplete, onSkip }: TrackpadTestProps) {
     setClickCount(prev => prev + 1);
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
+  const handleWheel = (_e: React.WheelEvent) => {
+    // Don't call preventDefault as it can cause issues in some WebView contexts
     setGestureDetected(true);
   };
 
