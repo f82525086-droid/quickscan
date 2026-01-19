@@ -48,7 +48,8 @@
       "warning": "Warning",
       "failed": "Failed",
       "pending": "Pending",
-      "testing": "Testing"
+      "testing": "Testing",
+      "skipped": "Skipped"
     }
   },
   "hardware": {

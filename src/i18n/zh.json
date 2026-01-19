@@ -48,7 +48,8 @@
       "warning": "注意",
       "failed": "异常",
       "pending": "待检测",
-      "testing": "检测中"
+      "testing": "检测中",
+      "skipped": "已跳过"
     }
   },
   "hardware": {

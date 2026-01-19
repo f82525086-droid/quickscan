@@ -704,22 +704,22 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Monitor size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.screen')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.screen.hasDeadPixel ? 'var(--color-warning)' : 'var(--color-success)' }}>
-                {report.interactive.screen.hasDeadPixel ? t('screen.hasDeadPixel') : t('screen.noDeadPixel')}
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.screen.skipped ? '#7C3AED' : report.interactive.screen.hasDeadPixel ? 'var(--color-warning)' : 'var(--color-success)' }}>
+                {report.interactive.screen.skipped ? t('detection.status.skipped') : report.interactive.screen.hasDeadPixel ? t('screen.hasDeadPixel') : t('screen.noDeadPixel')}
               </p>
             </div>
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Keyboard size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.keyboard')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--color-success)' }}>
-                {report.interactive.keyboard.tested ? t('detection.status.passed') : t('detection.status.pending')}
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.keyboard.skipped ? '#7C3AED' : 'var(--color-success)' }}>
+                {report.interactive.keyboard.skipped ? t('detection.status.skipped') : report.interactive.keyboard.tested ? t('detection.status.passed') : t('detection.status.pending')}
               </p>
             </div>
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Mouse size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.trackpad')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.trackpad.clickWorking ? 'var(--color-success)' : 'var(--color-warning)' }}>
-                {report.interactive.trackpad.clickWorking && report.interactive.trackpad.dragWorking && report.interactive.trackpad.gestureWorking 
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.trackpad.skipped ? '#7C3AED' : report.interactive.trackpad.clickWorking ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                {report.interactive.trackpad.skipped ? t('detection.status.skipped') : report.interactive.trackpad.clickWorking && report.interactive.trackpad.dragWorking && report.interactive.trackpad.gestureWorking 
                   ? t('detection.status.passed') 
                   : t('detection.status.warning')}
               </p>
@@ -727,27 +727,51 @@ export function ReportPage({ report, onBack }: ReportPageProps) {
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Camera size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.camera')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.camera.working ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                {report.interactive.camera.working ? t('camera.working') : t('camera.notWorking')}
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.camera.skipped ? '#7C3AED' : report.interactive.camera.working ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                {report.interactive.camera.skipped ? t('detection.status.skipped') : report.interactive.camera.working ? t('camera.working') : t('camera.notWorking')}
               </p>
             </div>
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Mic size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.microphone')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.microphone.working ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                {report.interactive.microphone.working ? t('detection.status.passed') : t('detection.status.failed')}
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.microphone.skipped ? '#7C3AED' : report.interactive.microphone.working ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                {report.interactive.microphone.skipped ? t('detection.status.skipped') : report.interactive.microphone.working ? t('detection.status.passed') : t('detection.status.failed')}
               </p>
             </div>
             <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
               <Volume2 size={24} style={{ marginBottom: '8px' }} />
               <p style={{ margin: 0, fontWeight: 500 }}>{t('detection.categories.speaker')}</p>
-              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.speaker.leftChannel && report.interactive.speaker.rightChannel ? 'var(--color-success)' : 'var(--color-warning)' }}>
-                {report.interactive.speaker.leftChannel && report.interactive.speaker.rightChannel 
+              <p style={{ margin: '4px 0 0', fontSize: '14px', color: report.interactive.speaker.skipped ? '#7C3AED' : report.interactive.speaker.leftChannel && report.interactive.speaker.rightChannel ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                {report.interactive.speaker.skipped ? t('detection.status.skipped') : report.interactive.speaker.leftChannel && report.interactive.speaker.rightChannel 
                   ? t('detection.status.passed') 
                   : `${!report.interactive.speaker.leftChannel ? (isZh ? '左声道异常' : 'Left issue') : ''} ${!report.interactive.speaker.rightChannel ? (isZh ? '右声道异常' : 'Right issue') : ''}`}
               </p>
             </div>
           </div>
+
+          {/* Skipped Tests Summary */}
+          {(report.interactive.screen.skipped || report.interactive.keyboard.skipped || report.interactive.trackpad.skipped || 
+            report.interactive.camera.skipped || report.interactive.microphone.skipped || report.interactive.speaker.skipped) && (
+            <div style={{ 
+              backgroundColor: '#F3E8FF', 
+              padding: '16px', 
+              borderRadius: '8px',
+              borderLeft: '4px solid #7C3AED',
+              marginBottom: '24px'
+            }}>
+              <h4 style={{ marginBottom: '8px', color: '#7C3AED' }}>{isZh ? '跳过的检测项' : 'Skipped Tests'}</h4>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+                {[
+                  report.interactive.screen.skipped && t('detection.categories.screen'),
+                  report.interactive.keyboard.skipped && t('detection.categories.keyboard'),
+                  report.interactive.trackpad.skipped && t('detection.categories.trackpad'),
+                  report.interactive.camera.skipped && t('detection.categories.camera'),
+                  report.interactive.microphone.skipped && t('detection.categories.microphone'),
+                  report.interactive.speaker.skipped && t('detection.categories.speaker'),
+                ].filter(Boolean).join('、')}
+              </p>
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div style={{ 

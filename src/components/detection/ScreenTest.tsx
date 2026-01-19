@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SkipForward } from 'lucide-react';
 
 interface ScreenTestProps {
   onComplete: (hasDeadPixel: boolean) => void;
+  onSkip: () => void;
 }
 
 const COLORS = [
@@ -13,7 +15,7 @@ const COLORS = [
   { key: 'black', value: '#000000' },
 ];
 
-export function ScreenTest({ onComplete }: ScreenTestProps) {
+export function ScreenTest({ onComplete, onSkip }: ScreenTestProps) {
   const { t } = useTranslation();
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -105,12 +107,16 @@ export function ScreenTest({ onComplete }: ScreenTestProps) {
             {t('home.startButton')}
           </button>
 
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-success" onClick={() => handleFinish(false)}>
               {t('screen.noDeadPixel')}
             </button>
             <button className="btn btn-danger" onClick={() => handleFinish(true)}>
               {t('screen.hasDeadPixel')}
+            </button>
+            <button className="btn btn-secondary" onClick={onSkip}>
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>

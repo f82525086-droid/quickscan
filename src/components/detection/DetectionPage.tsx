@@ -73,12 +73,12 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
   const [storageData, setStorageData] = useState<StorageData | null>(null);
   const [refurbishmentData, setRefurbishmentData] = useState<RefurbishmentData | null>(null);
   const [interactiveResults, setInteractiveResults] = useState({
-    screen: { tested: false, hasDeadPixel: false },
-    keyboard: { tested: false, testedCount: 0, totalKeys: 78 },
-    trackpad: { tested: false, click: true, drag: true, gesture: true },
-    camera: { tested: false, working: true },
-    microphone: { tested: false, working: true },
-    speaker: { tested: false, left: true, right: true },
+    screen: { tested: false, skipped: false, hasDeadPixel: false },
+    keyboard: { tested: false, skipped: false, testedCount: 0, totalKeys: 78 },
+    trackpad: { tested: false, skipped: false, click: true, drag: true, gesture: true },
+    camera: { tested: false, skipped: false, working: true },
+    microphone: { tested: false, skipped: false, working: true },
+    speaker: { tested: false, skipped: false, left: true, right: true },
   });
   
   const [steps, setSteps] = useState<DetectionStep[]>([
@@ -220,43 +220,71 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
     switch (testId) {
       case 'screen': {
         const hasDeadPixel = result as boolean;
-        setInteractiveResults(prev => ({ ...prev, screen: { tested: true, hasDeadPixel } }));
+        setInteractiveResults(prev => ({ ...prev, screen: { ...prev.screen, tested: true, hasDeadPixel } }));
         updateStepStatus('screen', hasDeadPixel ? 'warning' : 'passed', 
           hasDeadPixel ? t('screen.hasDeadPixel') : t('screen.noDeadPixel'));
         break;
       }
       case 'keyboard': {
         const { allPassed, testedCount, totalKeys } = result as { allPassed: boolean; testedCount: number; totalKeys: number };
-        setInteractiveResults(prev => ({ ...prev, keyboard: { tested: true, testedCount, totalKeys } }));
+        setInteractiveResults(prev => ({ ...prev, keyboard: { ...prev.keyboard, tested: true, testedCount, totalKeys } }));
         updateStepStatus('keyboard', allPassed ? 'passed' : 'warning', `${testedCount}/${totalKeys} ${t('keyboard.tested')}`);
         break;
       }
       case 'trackpad': {
         const trackpadResult = result as { click: boolean; drag: boolean; gesture: boolean };
-        setInteractiveResults(prev => ({ ...prev, trackpad: { tested: true, ...trackpadResult } }));
+        setInteractiveResults(prev => ({ ...prev, trackpad: { ...prev.trackpad, tested: true, ...trackpadResult } }));
         const allPassed = trackpadResult.click && trackpadResult.drag && trackpadResult.gesture;
         updateStepStatus('trackpad', allPassed ? 'passed' : 'warning', allPassed ? t('detection.status.passed') : t('detection.status.warning'));
         break;
       }
       case 'camera': {
         const working = result as boolean;
-        setInteractiveResults(prev => ({ ...prev, camera: { tested: true, working } }));
+        setInteractiveResults(prev => ({ ...prev, camera: { ...prev.camera, tested: true, working } }));
         updateStepStatus('camera', working ? 'passed' : 'failed', working ? t('camera.working') : t('camera.notWorking'));
         break;
       }
       case 'microphone': {
         const micWorking = result as boolean;
-        setInteractiveResults(prev => ({ ...prev, microphone: { tested: true, working: micWorking } }));
+        setInteractiveResults(prev => ({ ...prev, microphone: { ...prev.microphone, tested: true, working: micWorking } }));
         updateStepStatus('microphone', micWorking ? 'passed' : 'failed', micWorking ? t('detection.status.passed') : t('detection.status.failed'));
         break;
       }
       case 'speaker': {
         const speakerResult = result as { left: boolean; right: boolean };
-        setInteractiveResults(prev => ({ ...prev, speaker: { tested: true, ...speakerResult } }));
+        setInteractiveResults(prev => ({ ...prev, speaker: { ...prev.speaker, tested: true, ...speakerResult } }));
         const speakerPassed = speakerResult.left && speakerResult.right;
         updateStepStatus('speaker', speakerPassed ? 'passed' : 'warning', speakerPassed ? t('detection.status.passed') : t('detection.status.warning'));
         break;
       }
+    }
+
+    continueFromNextStep(testId);
+  };
+
+  const handleTestSkip = (testId: string) => {
+    setActiveTest(null);
+    updateStepStatus(testId, 'skipped', t('detection.status.skipped'));
+    
+    switch (testId) {
+      case 'screen':
+        setInteractiveResults(prev => ({ ...prev, screen: { ...prev.screen, skipped: true } }));
+        break;
+      case 'keyboard':
+        setInteractiveResults(prev => ({ ...prev, keyboard: { ...prev.keyboard, skipped: true } }));
+        break;
+      case 'trackpad':
+        setInteractiveResults(prev => ({ ...prev, trackpad: { ...prev.trackpad, skipped: true } }));
+        break;
+      case 'camera':
+        setInteractiveResults(prev => ({ ...prev, camera: { ...prev.camera, skipped: true } }));
+        break;
+      case 'microphone':
+        setInteractiveResults(prev => ({ ...prev, microphone: { ...prev.microphone, skipped: true } }));
+        break;
+      case 'speaker':
+        setInteractiveResults(prev => ({ ...prev, speaker: { ...prev.speaker, skipped: true } }));
+        break;
     }
 
     continueFromNextStep(testId);
@@ -338,12 +366,12 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
       },
       sensors: {},
       interactive: {
-        screen: { tested: interactiveResults.screen.tested, hasDeadPixel: interactiveResults.screen.hasDeadPixel },
-        keyboard: { tested: interactiveResults.keyboard.tested, testedKeys: [], totalKeys: interactiveResults.keyboard.totalKeys, failedKeys: [] },
-        trackpad: { tested: interactiveResults.trackpad.tested, clickWorking: interactiveResults.trackpad.click, dragWorking: interactiveResults.trackpad.drag, gestureWorking: interactiveResults.trackpad.gesture },
-        camera: { tested: interactiveResults.camera.tested, working: interactiveResults.camera.working },
-        microphone: { tested: interactiveResults.microphone.tested, working: interactiveResults.microphone.working },
-        speaker: { tested: interactiveResults.speaker.tested, leftChannel: interactiveResults.speaker.left, rightChannel: interactiveResults.speaker.right },
+        screen: { tested: interactiveResults.screen.tested, skipped: interactiveResults.screen.skipped, hasDeadPixel: interactiveResults.screen.hasDeadPixel },
+        keyboard: { tested: interactiveResults.keyboard.tested, skipped: interactiveResults.keyboard.skipped, testedKeys: [], totalKeys: interactiveResults.keyboard.totalKeys, failedKeys: [] },
+        trackpad: { tested: interactiveResults.trackpad.tested, skipped: interactiveResults.trackpad.skipped, clickWorking: interactiveResults.trackpad.click, dragWorking: interactiveResults.trackpad.drag, gestureWorking: interactiveResults.trackpad.gesture },
+        camera: { tested: interactiveResults.camera.tested, skipped: interactiveResults.camera.skipped, working: interactiveResults.camera.working },
+        microphone: { tested: interactiveResults.microphone.tested, skipped: interactiveResults.microphone.skipped, working: interactiveResults.microphone.working },
+        speaker: { tested: interactiveResults.speaker.tested, skipped: interactiveResults.speaker.skipped, leftChannel: interactiveResults.speaker.left, rightChannel: interactiveResults.speaker.right },
       },
       refurbishment: refurbishmentData ? {
         isRefurbished: refurbishmentData.is_refurbished,
@@ -374,22 +402,22 @@ export function DetectionPage({ onComplete, onBack }: DetectionPageProps) {
 
   // Render active test component
   if (activeTest === 'screen') {
-    return <ScreenTest onComplete={(hasDeadPixel) => handleTestComplete('screen', hasDeadPixel)} />;
+    return <ScreenTest onComplete={(hasDeadPixel) => handleTestComplete('screen', hasDeadPixel)} onSkip={() => handleTestSkip('screen')} />;
   }
   if (activeTest === 'keyboard') {
-    return <KeyboardTest onComplete={(allPassed, testedCount, totalKeys) => handleTestComplete('keyboard', { allPassed, testedCount, totalKeys })} />;
+    return <KeyboardTest onComplete={(allPassed, testedCount, totalKeys) => handleTestComplete('keyboard', { allPassed, testedCount, totalKeys })} onSkip={() => handleTestSkip('keyboard')} />;
   }
   if (activeTest === 'trackpad') {
-    return <TrackpadTest onComplete={(result) => handleTestComplete('trackpad', result)} />;
+    return <TrackpadTest onComplete={(result) => handleTestComplete('trackpad', result)} onSkip={() => handleTestSkip('trackpad')} />;
   }
   if (activeTest === 'camera') {
-    return <CameraTest onComplete={(working) => handleTestComplete('camera', working)} />;
+    return <CameraTest onComplete={(working) => handleTestComplete('camera', working)} onSkip={() => handleTestSkip('camera')} />;
   }
   if (activeTest === 'microphone') {
-    return <MicrophoneTest onComplete={(working) => handleTestComplete('microphone', working)} />;
+    return <MicrophoneTest onComplete={(working) => handleTestComplete('microphone', working)} onSkip={() => handleTestSkip('microphone')} />;
   }
   if (activeTest === 'speaker') {
-    return <SpeakerTest onComplete={(result) => handleTestComplete('speaker', result)} />;
+    return <SpeakerTest onComplete={(result) => handleTestComplete('speaker', result)} onSkip={() => handleTestSkip('speaker')} />;
   }
 
   return (

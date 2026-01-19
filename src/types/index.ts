@@ -1,4 +1,4 @@
-export type DetectionStatus = 'pending' | 'testing' | 'passed' | 'warning' | 'failed';
+export type DetectionStatus = 'pending' | 'testing' | 'passed' | 'warning' | 'failed' | 'skipped';
 
 export interface DetectionItem {
   id: string;
@@ -102,11 +102,13 @@ export interface SensorInfo {
 export interface InteractiveTestResult {
   screen: {
     tested: boolean;
+    skipped?: boolean;
     hasDeadPixel: boolean;
     screenshot?: string;
   };
   keyboard: {
     tested: boolean;
+    skipped?: boolean;
     testedKeys: string[];
     totalKeys: number;
     failedKeys: string[];
@@ -114,21 +116,25 @@ export interface InteractiveTestResult {
   };
   trackpad: {
     tested: boolean;
+    skipped?: boolean;
     clickWorking: boolean;
     dragWorking: boolean;
     gestureWorking: boolean;
   };
   camera: {
     tested: boolean;
+    skipped?: boolean;
     working: boolean;
     screenshot?: string;
   };
   microphone: {
     tested: boolean;
+    skipped?: boolean;
     working: boolean;
   };
   speaker: {
     tested: boolean;
+    skipped?: boolean;
     leftChannel: boolean;
     rightChannel: boolean;
   };

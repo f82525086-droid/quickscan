@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SkipForward } from 'lucide-react';
 
 interface KeyboardTestProps {
   onComplete: (allPassed: boolean, testedCount: number, totalKeys: number) => void;
+  onSkip: () => void;
 }
 
 const MAC_KEYBOARD_LAYOUT = [
@@ -45,7 +47,7 @@ const KEY_DISPLAY_MAP: Record<string, string> = {
   'ArrowLeft': '←', 'ArrowRight': '→', 'ArrowUp': '↑', 'ArrowDown': '↓',
 };
 
-export function KeyboardTest({ onComplete }: KeyboardTestProps) {
+export function KeyboardTest({ onComplete, onSkip }: KeyboardTestProps) {
   const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
@@ -132,9 +134,13 @@ export function KeyboardTest({ onComplete }: KeyboardTestProps) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
             <button className="btn btn-primary" onClick={handleFinish}>
               {t('screen.finish')}
+            </button>
+            <button className="btn btn-secondary" onClick={onSkip}>
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>

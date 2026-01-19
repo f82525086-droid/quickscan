@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SkipForward } from 'lucide-react';
 
 interface TrackpadTestProps {
   onComplete: (result: { click: boolean; drag: boolean; gesture: boolean }) => void;
+  onSkip: () => void;
 }
 
 interface Point {
@@ -10,7 +12,7 @@ interface Point {
   y: number;
 }
 
-export function TrackpadTest({ onComplete }: TrackpadTestProps) {
+export function TrackpadTest({ onComplete, onSkip }: TrackpadTestProps) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [clickCount, setClickCount] = useState(0);
@@ -175,9 +177,13 @@ export function TrackpadTest({ onComplete }: TrackpadTestProps) {
             {t('trackpad.hint')}
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
             <button className="btn btn-primary" onClick={handleFinish}>
               {t('screen.finish')}
+            </button>
+            <button className="btn btn-secondary" onClick={onSkip}>
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>

@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { Volume2, CheckCircle, XCircle, SkipForward } from 'lucide-react';
 
 interface SpeakerTestProps {
   onComplete: (result: { left: boolean; right: boolean }) => void;
+  onSkip: () => void;
 }
 
-export function SpeakerTest({ onComplete }: SpeakerTestProps) {
+export function SpeakerTest({ onComplete, onSkip }: SpeakerTestProps) {
   const { t } = useTranslation();
   const [leftTested, setLeftTested] = useState(false);
   const [rightTested, setRightTested] = useState(false);
@@ -132,7 +133,7 @@ export function SpeakerTest({ onComplete }: SpeakerTestProps) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button 
               className="btn btn-success" 
               onClick={() => onComplete({ left: true, right: true })}
@@ -146,6 +147,13 @@ export function SpeakerTest({ onComplete }: SpeakerTestProps) {
             >
               <XCircle size={20} />
               {t('speaker.hasIssue')}
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={onSkip}
+            >
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>

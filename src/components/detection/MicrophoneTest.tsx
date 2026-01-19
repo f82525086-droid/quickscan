@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Square, Play, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Mic, Square, Play, CheckCircle, XCircle, AlertTriangle, ExternalLink, SkipForward } from 'lucide-react';
 import { Command } from '@tauri-apps/plugin-shell';
 
 interface MicrophoneTestProps {
   onComplete: (working: boolean) => void;
+  onSkip: () => void;
 }
 
-export function MicrophoneTest({ onComplete }: MicrophoneTestProps) {
+export function MicrophoneTest({ onComplete, onSkip }: MicrophoneTestProps) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const [isRecording, setIsRecording] = useState(false);
@@ -228,7 +229,7 @@ export function MicrophoneTest({ onComplete }: MicrophoneTestProps) {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button 
               className="btn btn-success" 
               onClick={() => onComplete(true)}
@@ -242,6 +243,13 @@ export function MicrophoneTest({ onComplete }: MicrophoneTestProps) {
             >
               <XCircle size={20} />
               {t('common.abnormal')}
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={onSkip}
+            >
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>

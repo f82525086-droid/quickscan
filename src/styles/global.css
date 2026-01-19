@@ -124,6 +124,11 @@ body {
   color: #1E40AF;
 }
 
+.status-skipped {
+  background: #F3E8FF;
+  color: #7C3AED;
+}
+
 /* Progress bar */
 .progress-bar {
   width: 100%;

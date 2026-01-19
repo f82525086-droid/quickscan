@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <!-- 背景圆角矩形 -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <!-- 放大镜圆环 -->
+  <circle cx="220" cy="220" r="120" fill="none" stroke="white" stroke-width="36"/>
+  <!-- 放大镜手柄 -->
+  <line x1="310" y1="310" x2="420" y2="420" stroke="white" stroke-width="36" stroke-linecap="round"/>
+  <!-- 对勾 -->
+  <polyline points="160,220 200,270 280,170" fill="none" stroke="white" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

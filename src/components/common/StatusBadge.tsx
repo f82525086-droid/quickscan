@@ -1,4 +1,4 @@
-import { CheckCircle, AlertCircle, XCircle, Clock, Loader } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle, Clock, Loader, SkipForward } from 'lucide-react';
 import type { DetectionStatus } from '../../types';
 
 interface StatusBadgeProps {
@@ -13,6 +13,7 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
     failed: { icon: XCircle, className: 'status-failed' },
     pending: { icon: Clock, className: 'status-pending' },
     testing: { icon: Loader, className: 'status-testing' },
+    skipped: { icon: SkipForward, className: 'status-skipped' },
   };
 
   const { icon: Icon, className } = config[status];

@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, AlertTriangle, ExternalLink, SkipForward } from 'lucide-react';
 import { Command } from '@tauri-apps/plugin-shell';
 
 interface CameraTestProps {
   onComplete: (working: boolean) => void;
+  onSkip: () => void;
 }
 
-export function CameraTest({ onComplete }: CameraTestProps) {
+export function CameraTest({ onComplete, onSkip }: CameraTestProps) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -72,6 +73,11 @@ export function CameraTest({ onComplete }: CameraTestProps) {
   const handleFinish = (working: boolean) => {
     stopCamera();
     onComplete(working);
+  };
+
+  const handleSkip = () => {
+    stopCamera();
+    onSkip();
   };
 
   return (
@@ -144,7 +150,7 @@ export function CameraTest({ onComplete }: CameraTestProps) {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button 
               className="btn btn-success" 
               onClick={() => handleFinish(true)}
@@ -159,6 +165,13 @@ export function CameraTest({ onComplete }: CameraTestProps) {
             >
               <XCircle size={20} />
               {t('camera.notWorking')}
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleSkip}
+            >
+              <SkipForward size={20} />
+              {t('common.skip')}
             </button>
           </div>
         </div>
