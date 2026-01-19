@@ -349,21 +349,29 @@
         </div>
         
         <p class="version-info">
-          当前版本: <span id="version">loading...</span> · 
+          当前版本: <span id="version">v0.2.5</span> · 
           <a href="https://github.com/f82525086-droid/quickscan/releases" target="_blank">查看所有版本</a>
         </p>
         <script>
-          fetch('https://api.github.com/repos/f82525086-droid/quickscan/releases/latest')
-            .then(r => r.json())
-            .then(data => {
-              document.getElementById('version').textContent = data.tag_name || 'unknown';
-              const assets = data.assets || [];
-              const macAsset = assets.find(a => a.name.endsWith('.dmg'));
-              const winAsset = assets.find(a => a.name.endsWith('-setup.exe'));
-              if (macAsset) document.getElementById('download-macos').href = macAsset.browser_download_url;
-              if (winAsset) document.getElementById('download-windows').href = winAsset.browser_download_url;
-            })
-            .catch(() => document.getElementById('version').textContent = 'unknown');
+          (function() {
+            var repo = 'f82525086-droid/quickscan';
+            var macBtn = document.getElementById('download-macos');
+            var winBtn = document.getElementById('download-windows');
+            var verSpan = document.getElementById('version');
+            var fallbackVer = verSpan.textContent;
+            
+            fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                if (data.tag_name) verSpan.textContent = data.tag_name;
+                var assets = data.assets || [];
+                var macAsset = assets.find(function(a) { return a.name.endsWith('.dmg'); });
+                var winAsset = assets.find(function(a) { return a.name.endsWith('-setup.exe'); });
+                if (macAsset) macBtn.href = macAsset.browser_download_url;
+                if (winAsset) winBtn.href = winAsset.browser_download_url;
+              })
+              .catch(function() { verSpan.textContent = fallbackVer; });
+          })();
         </script>
       </div>
     </section>
